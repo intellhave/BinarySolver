@@ -14,6 +14,7 @@ def norm_2(x):
 
 
 x0 = np.array([2,2])
+v0 = np.zeros(x0.shape)
 
 k = 100
 constrs = ({'type':'ineq',
