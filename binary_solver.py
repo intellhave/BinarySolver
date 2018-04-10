@@ -30,10 +30,7 @@ def BinarySolver(func, x0, rho, maxIter):
         return np.dot(xt, x)
 
     # Define the lower and upper bounds for fx, i.e., -1 <= x <= 1
-
     xBounds = [[-1,1] for i in range(n)]
-  
-
 
     # Ball-constraint ||v||^2 <= n
     vConstraints = ({'type':'ineq',
@@ -54,13 +51,17 @@ def BinarySolver(func, x0, rho, maxIter):
         v = v_res.x
 
         # Check for convergence
-        if norm(x-xt) < 0.00000000001:
+        if norm(x-xt) < 1e-6:
             converged = True
             print('--------Converged---------')
 
+       
+        print("Iter: %d , cost: %f" %(iter, func(xt)))
+        #rho = rho*1.05
         xt = x
         vt = v
-        rho = rho*1.05
+        iter = iter + 1
+        
 
 
     return xt
