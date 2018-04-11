@@ -55,6 +55,7 @@ def BinarySolver(func, x0, rho, maxIter):
             converged = True
             print('--------Converged---------')
             return x
+         
 
        
         print("Iter: %d , cost: %f" %(iter, func(xt)))
@@ -63,11 +64,8 @@ def BinarySolver(func, x0, rho, maxIter):
         xt = x
         vt = v
         iter = iter + 1
-        
-
 
     return xt
-
 
 def NextPermute(x):
     """
@@ -86,10 +84,8 @@ def NextPermute(x):
         return  x
     else:
         return np.zeros(n) 
-
-                
-
-
+    
+    
 
 def BruteForceBinarySolver(func, x0):
     """
@@ -104,11 +100,13 @@ def BruteForceBinarySolver(func, x0):
 
     while not (xt[0] == 0):
         cost = func(xt)
-        print(xt)
-        print(cost)
+        #print(xt)
+        #print(cost)
         if (cost  < minCost):
-            sol = xt
+            sol = np.copy(xt)
             minCost = cost 
+            print("MinCost  = %f" % minCost)
+            print sol
         xt = NextPermute(xt)
 
     return sol, minCost

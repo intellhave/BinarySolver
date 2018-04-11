@@ -9,16 +9,20 @@ from binary_solver import BinarySolver, BruteForceBinarySolver, NextPermute
 
 # Test with a random function min x'Wx
 
+x0 = -1*np.ones(10)
+dim = len(x0)
+W = np.random.rand(dim, dim)
+b = np.random.rand(dim, 1)
+
 def myFunction(x):
-    return -((x[0] - 1) + 5*(x[1]-5)**3 + 9*x[2] + x[3]**2 + 10*x[4]**3 - x[5]) 
+    xx  = x[None, :]
+    return xx.dot(W).dot(xx.T)[0][0] + xx.dot(b)
 
-x0 = np.array([-1,-1,-1,1,1,1])
+sol, minCost = BruteForceBinarySolver(myFunction, x0)
+print('------BRUTEFORCE SOLUTION--------')
+print(sol)
+print (minCost[0][0])
 
-
-
-x, minCost = BruteForceBinarySolver(myFunction, x0)
-print(x)
-print (minCost)
-
-x = BinarySolver(myFunction, x0, 100, 1000)
+print('------EXACT PENALTY--------')
+x = BinarySolver(myFunction, x0, 1000, 1000)
 print(x)
