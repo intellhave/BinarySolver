@@ -51,13 +51,11 @@ def BinarySolver(func, x0, rho, maxIter):
         v = v_res.x
 
         # Check for convergence
-        if iter > 5 and (norm(x - xt) < 1e-6 or (func(x) - func(xt) < 1e-6)):
+        if iter > 5 and (norm(x - xt) < 1e-9 or (func(x) - func(xt) < 1e-9)):
             converged = True
             print('--------Converged---------')
             return x
-         
 
-       
         print("Iter: %d , cost: %f" %(iter, func(xt)))
         #print (xt)
         rho = rho*1.1
