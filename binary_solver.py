@@ -41,7 +41,7 @@ def BinarySolver(func, x0, rho, maxIter):
     # Now, let the iterations begin
     converged = False
     iter = 0
-    while iter < maxIter and not converged:
+    while iter < maxIter and not converged:               
         # Fix v, minimize x
         x_res = minimize(fx, xt, bounds = xBounds)
         x = x_res.x
@@ -51,13 +51,15 @@ def BinarySolver(func, x0, rho, maxIter):
         v = v_res.x
 
         # Check for convergence
-        if norm(x-xt) < 1e-6:
+        if iter > 5 and (norm(x - xt) < 1e-6 or (func(x) - func(xt) < 1e-6)):
             converged = True
             print('--------Converged---------')
+            return x
 
        
         print("Iter: %d , cost: %f" %(iter, func(xt)))
-        #rho = rho*1.05
+        #print (xt)
+        rho = rho*1.1
         xt = x
         vt = v
         iter = iter + 1
@@ -65,3 +67,48 @@ def BinarySolver(func, x0, rho, maxIter):
 
 
     return xt
+
+
+def NextPermute(x):
+    """
+        Return the next permutation from the current x in {-1,1}^L
+        If x is last element, return an array of all zeros
+    """
+    n = len(x) 
+    i = n - 1
+    while x[i] < 0 and i>=0:
+        i = i - 1
+    
+    if i >= 0:
+        x[i]= -1
+        for j in range(i+1,n):
+            x[j] = 1
+        return  x
+    else:
+        return np.zeros(n) 
+
+                
+
+
+
+def BruteForceBinarySolver(func, x0):
+    """
+        Solve min_x func(x) s.t. x \in {-1,1} by exhaustive search
+
+    """
+    n = len(x0)
+    xt = np.ones(n, dtype='int')
+
+    minCost = np.inf
+    sol = xt
+
+    while not (xt[0] == 0):
+        cost = func(xt)
+        print(xt)
+        print(cost)
+        if (cost  < minCost):
+            sol = xt
+            minCost = cost 
+        xt = NextPermute(xt)
+
+    return sol, minCost
