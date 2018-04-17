@@ -17,7 +17,7 @@ def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=5):
                                as the latent codes of input
     """
     X = Xinput.T               # X: n_samples x n_dim
-    m, D = X.shape
+    D, m = X.shape
     B = np.sign(np.random.rand(L, m))
     c1 = np.random.rand(L,1)
     c2 = np.random.rand(D,1)
