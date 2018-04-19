@@ -8,7 +8,7 @@ def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=5):
     s.t W1*Xinput + c1 \in {-1, 1}
     By Relaxed Binary Autoencoder [CVPR17]
     Args:
-        - Xinput: ([n_samples, n_dim] numpy array) input samples
+        - Xinput: ([N, D] numpy array) input samples
         - L: dimension of latent space (W1*Xinput + c1)
         - lamb, beta: (float) hyperparameters
         - max_iter: (int) number of iterations
@@ -17,8 +17,8 @@ def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=5):
                                as the latent codes of input
         W2: (DxL numpy array): decoder
         W1: (LxD numpy array): encoder
-        c2: (Lx1 numpy array): bias of decoder
-        c1: (Dx1 numpy array): bias of encoder
+        c2: (Dx1 numpy array): bias of decoder
+        c1: (Lx1 numpy array): bias of encoder
         B: (LxN): binary codes
     """
     X = Xinput.T               # X: n_samples x n_dim
