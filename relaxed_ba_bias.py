@@ -12,7 +12,6 @@ def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=300):
         W1 = lamb*np.matmul(np.matmul((B + c1), X.T), \
                                 np.linalg.inv(lamb*np.matmul(X,X.T) + beta*np.eye(D)))
 
-        
         # given B, compute W2
         W2 = np.matmul( np.matmul((X-c2), B.T), \
                        np.linalg.inv(np.matmul(B,B.T) + beta*np.eye(L)))
@@ -21,7 +20,6 @@ def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=300):
         c1 = (1.0/m)*np.matmul(B - np.matmul(W1, X), np.ones((m,1)))
          # compute c2
         c2 = (1.0/m)*np.matmul(X - np.matmul(W2, B), np.ones((m,1)))
-        # print(np.absolute(W1).sum(), np.absolute(W2).sum(), np.absolute(c1).sum(), np.absolute(c2).sum())
 
         # given W1, W2, c1, c2, compute B
         Xtmp = X - c2
