@@ -15,6 +15,11 @@ def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=5):
     Returns:
         [W2, W1, c2, c1, B] : list decoder, encoder and their bias as well
                                as the latent codes of input
+        W2: (DxL numpy array): decoder
+        W1: (LxD numpy array): encoder
+        c2: (Lx1 numpy array): bias of decoder
+        c1: (Dx1 numpy array): bias of encoder
+        B: (LxN): binary codes
     """
     X = Xinput.T               # X: n_samples x n_dim
     D, m = X.shape
@@ -24,21 +29,22 @@ def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=5):
 
     for _ in xrange(max_iter):
         # given B, compute W1
-        W1 = lamb*np.matmul(np.matmul((B + c1*np.ones((1,m))), X.T), \
-                                np.linalg.inv(lamb*np.matmul(X,X.T) + beta*np.eye(D)))
+        W1 = lamb*np.matmul(np.matmul((B + c1*np.ones((1, m))), X.T), \
+                                np.linalg.inv(lamb*np.matmul(X, X.T)
+                                              + beta*np.eye(D)))
 
         # given B, compute W2
         W2 = np.matmul( np.matmul((X-c2*np.ones((1,m))), B.T), \
-                       np.linalg.inv(np.matmul(B,B.T) + beta*np.eye(L)))
+                       np.linalg.inv(np.matmul(B, B.T) + beta*np.eye(L)))
         # compute c1
-        c1 = (1/m)*np.matmul(B - np.matmul(W1, X), np.ones((m, 1)))
+        c1 = (1.0/m)*np.matmul(B - np.matmul(W1, X), np.ones((m, 1)))
          # compute c2
-        c2 = (1/m)*np.matmul(X - np.matmul(W2, B), np.ones((m, 1)))
+        c2 = (1.0/m)*np.matmul(X - np.matmul(W2, B), np.ones((m, 1)))
 
         # given W1, W2, c1, c2, compute B
-        Xtmp = X - c2*np.ones((1,m))
-        H = np.matmul(W1, X) + c1*np.ones((1,m))
-        B = learn_B_new(Xtmp.T, W2.T, B.T, H.T, lamb);
+        Xtmp = X - c2*np.ones((1, m))
+        H = np.matmul(W1, X) + c1*np.ones((1, m))
+        B = learn_B_new(Xtmp.T, W2.T, B.T, H.T, lamb)
 
         B = B.T
     return W2, W1, c2, c1, B
