@@ -56,7 +56,7 @@ def learn_B_new(Y, Wg, Bpre, XF, nu):
     B = Bpre.copy()
 
     Q = nu * XF + np.matmul(Y, Wg.T)
-    print("B shape=", str(B.shape))
+    # print("B shape=", str(B.shape))
     _, L = B.shape
 
     for time in range(20):
