@@ -1,15 +1,34 @@
 import numpy as np
 
 def relaxed_ba_bias(Xinput, L, lamb, beta, max_iter=300):
+    """
+    Solve the following function
+    || W2(W1*Xinput + c1) + c2 - X ||
+    s.t W1*Xinput + c1 \in {-1, 1}
+    By Relaxed Binary Autoencoder [CVPR17]
+    Args:
+        - Xinput: ([n_samples, n_dim] numpy array) input samples
+        - L: dimension of latent space (W1*Xinput + c1)
+        - lamb, beta: (float) hyperparameters
+        - max_iter: (int) number of iterations
+    Returns:
+        [W2, W1, c2, c1, B] : list decoder, encoder and their bias as well
+                               as the latent codes of input
+        W2: (DxL numpy array): decoder
+        W1: (LxD numpy array): encoder
+        c2: (Lx1 numpy array): bias of decoder
+        c1: (Dx1 numpy array): bias of encoder
+        B: (LxN): binary codes
+    """
     X = Xinput.T               # X: n_samples x n_dim
     D, m = X.shape
-    B = np.sign(np.random.rand(L, m) - 0.5)
+    B = np.sign(np.random.rand(L, m))
     c1 = np.random.rand(L,1)
     c2 = np.random.rand(D,1)
 
     for i in range(max_iter):
         # given B, compute W1
-        W1 = lamb*np.matmul(np.matmul((B + c1), X.T), \
+        W1 = lamb*np.matmul(np.matmul((B - c1), X.T), \
                                 np.linalg.inv(lamb*np.matmul(X,X.T) + beta*np.eye(D)))
 
         # given B, compute W2
@@ -37,6 +56,7 @@ def learn_B_new(Y, Wg, Bpre, XF, nu):
     B = Bpre.copy()
 
     Q = nu * XF + np.matmul(Y, Wg.T)
+    print("B shape=", str(B.shape))
     _, L = B.shape
 
     for time in range(20):
