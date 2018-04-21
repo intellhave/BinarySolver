@@ -4,8 +4,6 @@ import numpy as np
 #import autograd.numpy as np
 from scipy.optimize import minimize
 from scipy.linalg import norm
-from autograd import grad
-#from ad import gh
 
 ########################################################################
 def BinarySolver(func, x0, rho, maxIter):
@@ -24,8 +22,8 @@ def BinarySolver(func, x0, rho, maxIter):
     n = len(x0)  
     #xt, vt: Values of x and v at the previous iteration, which are used to update x and v at the current iteration, respectively
     xt = x0
-    vt = np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this
-
+    #vt = np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this
+    vt = x0
 
     def fx(x): # Fix v, solve for x
         return func(x) + rho*(np.dot(x,vt))
@@ -62,9 +60,10 @@ def BinarySolver(func, x0, rho, maxIter):
         v = v_res.x
 
         # Check for convergence
-        if iter > 5 and (norm(x - xt) < 1e-9 and (func(x) - func(xt) < 1e-9)):
+        if iter > 2 and (norm(x - xt) < 1e-6 and (func(x) - func(xt) < 1e-6)):
             converged = True
             print('--------Converged---------')
+            x[x<0.99] = -1
             return x
 
         print("Iter: %d , cost: %f" %(iter, func(xt)))
@@ -75,9 +74,8 @@ def BinarySolver(func, x0, rho, maxIter):
         iter = iter + 1
 
     return xt
-
-
-#================================================================================
+    
+###################################################################################
 def BinarySolver_v1(func, x0, rho, maxIter):
     """
     Use exact penalty method to solve optimization problem with binary constraints
@@ -117,19 +115,19 @@ def BinarySolver_v1(func, x0, rho, maxIter):
     iter = 0
     while iter < maxIter and not converged:               
         # Fix v, minimize x
-        print('----Update x steps')
-        x_res = minimize(fx, xt, bounds = xBounds, tol=1e-3, method = 'Newton-CG')
+        #print('----Update x steps')
+        x_res = minimize(fx, xt, bounds = xBounds, tol=1e-3)
         x = x_res.x
 
         # Fix x, update v
-        print('----Update v steps')
+        #print('----Update v steps')
         v_res = minimize(fv, vt, constraints = vConstraints, method = 'COBYLA')
         v = v_res.x
 
         # Check for convergence
-        if iter > 5 and (norm(x - xt) < 1e-9 or (func(x) - func(xt) < 1e-9)):
+        if iter > 3 and (norm(x - xt) < 1e-6 or (func(x) - func(xt) < 1e-6)):
             converged = True
-            print('--------Converged---------')
+            print('--------Converged---------')            
             return x
 
         print("Iter: %d , cost: %f" %(iter, func(xt)))
@@ -138,8 +136,10 @@ def BinarySolver_v1(func, x0, rho, maxIter):
         xt = x
         vt = v
         iter = iter + 1
-
+    
     return xt
+
+
 
 
 def NextPermute(x):
