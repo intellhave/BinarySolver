@@ -29,7 +29,7 @@ def BinarySolver(func, x0, rho, maxIter):
         return func(x) - rho*(np.dot(x,vt))
 
     def fv(x): # Fix x, solve for v
-        return np.dot(xt, x)
+        return -np.dot(xt, x)
 
     # Define the lower and upper bounds for fx, i.e., -1 <= x <= 1
     #xBounds = [[-1,1] for i in range(n)]
@@ -63,7 +63,7 @@ def BinarySolver(func, x0, rho, maxIter):
         if iter > 2 and (norm(x - xt) < 1e-6 and (func(x) - func(xt) < 1e-6)):
             converged = True
             print('--------Converged---------')
-            x[x<0.99] = -1
+            #x[x<0.99] = -1
             return x
 
         print("Iter: %d , cost: %f" %(iter, func(xt)))
