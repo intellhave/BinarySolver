@@ -26,7 +26,7 @@ def BinarySolver(func, x0, rho, maxIter):
     vt = x0
 
     def fx(x): # Fix v, solve for x
-        return func(x) + rho*(np.dot(x,vt))
+        return func(x) - rho*(np.dot(x,vt))
 
     def fv(x): # Fix x, solve for v
         return np.dot(xt, x)
@@ -96,7 +96,7 @@ def BinarySolver_v1(func, x0, rho, maxIter):
 
 
     def fx(x): # Fix v, solve for x
-        return func(x) + rho*(np.dot(x,vt))
+        return func(x) - rho*(np.dot(x,vt))
 
     def fv(x): # Fix x, solve for v
         return np.dot(xt, x)
