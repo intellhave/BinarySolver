@@ -35,7 +35,7 @@ def BinarySolver(func, x0, rho, maxIter):
     #xBounds = [[-1,1] for i in range(n)]
     
     xConstraints = ({'type':'ineq',
-            'fun': lambda x: np.array([1 - x[i]^2])            
+            'fun': lambda x: np.array([1 - x[i]**2])            
            } for i in range(n))
     
     # Ball-constraint ||v||^2 <= n
