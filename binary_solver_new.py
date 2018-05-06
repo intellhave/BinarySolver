@@ -19,12 +19,13 @@ def BinarySolver(func, x0, rho, maxIter):
     
     n = len(x0)  
     #xt, vt: Values of x and v at the previous iteration, which are used to update x and v at the current iteration, respectively
-    xt = x0
-    vt = x0 #np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this
+    h0 = x0.copy()
+    xt = np.sign(x0)
+    vt = xt #np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this    
     print("Initial cost: %f norm x = %f" %(func(xt), norm(xt)))
     
     def fx(x): # Fix v, solve for x
-        return (func(x) + rho*(np.dot(x,vt)-n)**2) #+ 0.1*np.sum(np.power(x-x0,2))
+        return (func(x) + rho*(n-np.dot(x,vt))**2) + 0.01*np.sum(np.power(x-h0,2))
 
     def fv(x): # Fix x, solve for v
         return (n-np.dot(xt, x))**2
@@ -37,6 +38,9 @@ def BinarySolver(func, x0, rho, maxIter):
            } for i in range(n))
     
         # Ball-constraint ||v||^2 <= n
+    # vConstraints = ({'type':'ineq',
+    #         'fun': lambda x: np.array([1 - x[i]**2])            
+    #        } for i in range(n))
     vConstraints = ({'type':'ineq',
             'fun': lambda x: np.array([n - norm(x)**2]),
             'jac': lambda x: np.array(-2*x)
@@ -50,31 +54,31 @@ def BinarySolver(func, x0, rho, maxIter):
         print('----Update x steps')        
         #x_res = minimize(fx, xt, bounds = xBounds, method='SLSQP',jac = gradx)
         option = {'maxiter': 1000, 'disp':False}
-        x_res = minimize(fx, xt, constraints = xConstraints, method ='COBYLA', options=option)
+        x_res = minimize(fx, xt, constraints = xConstraints, method ='COBYLA')
         x = x_res.x
         #print(x_res.success)
         # Fix x, update v
         print('----Update v steps')
-        v_res = minimize(fv, vt, constraints = vConstraints , method='COBYLA', options = option)
+        v_res = minimize(fv, vt, constraints = vConstraints , method='COBYLA')
         v = v_res.x      
         #print(v_res.success)
         # pdb.set_trace()        
         # Check for convergence
-        if iter > 10 and ((norm(x - xt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<0.01):
+        if iter > 4 and ((norm(x - xt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
             converged = True
-            print('--------Converged---------')
-            #x[x<0.5] = -1
+            print('--------Using LINF  - Converged---------')
+            x[x>1] = 1
+            x[x<-1]=-1
             return x
 
         print("Iter: %d , cost: %.3f, rho = %.3f constraints: %f" %(iter, func(xt), rho, (n-np.dot(xt, vt))**2))
         #print (xt)
-        rho = rho*1.01
+        rho = rho*1.1
         xt = x
         vt = v
         iter = iter + 1
 
     return xt
-    
 # 
 
 
