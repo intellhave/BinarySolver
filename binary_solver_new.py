@@ -59,8 +59,7 @@ def BinarySolver(func, x0, rho, maxIter, sigma=100):
         print('----Update v steps')
         v_res = minimize(fv, vt, constraints = vConstraints, method='COBYLA')
         v = v_res.x
-        print max(x), min(x)
-        print max(v), min(v)
+        
         print("Iter: %d , fx = %.3f v diff: %.3f, rho = %.3f constraints: %f" %(iter, fx(x), norm(v - vt), rho, (n-np.dot(xt, vt))**2))
         # Check for convergence
         # if iter > 4 and ((norm(v - vt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
