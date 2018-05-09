@@ -22,47 +22,49 @@ def BinarySolver(func, x0, rho, maxIter, sigma=100):
     #xt, vt: Values of x and v at the previous iteration, which are used to update x and v at the current iteration, respectively
     h0 = x0.copy()
     xt = np.sign(x0)
-    vt = np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this
+    vt = xt; #np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this
     print("Initial cost: %f norm x = %f" %(func(xt), norm(xt)))
 
     def fx(x): # Fix v, solve for x
-        return (func(x) + rho*(n-np.dot(x,vt))**2) + sigma*np.sum(np.power(x-h0,2))
+        return (func(x) + rho*(n-np.dot(x,vt))**2) + sigma*np.sum(np.power(x-h0,2)) 
 
     def fv(x): # Fix x, solve for v
         return (n-np.dot(xt, x))**2
     
-    # Define the lower and upper bounds for fx, i.e., -1 <= x <= 1
-    #xBounds = [[-1,1] for i in range(n)]
-
+    # Define the lower and upper bounds for fx, i.e., -1 <= x <= 1    
     xConstraints = ({'type':'ineq',
             'fun': lambda x: np.array([1 - x[i]**2]),
-            'jac': lambda x: np.array(-2*x[i])
+            
            } for i in range(n))
 
-        # Ball-constraint ||v||^2 <= n
     vConstraints = ({'type':'ineq',
             'fun': lambda x: np.array([1 - x[i]**2]),
-            'jac': lambda x: np.array(-2*x[i])
+            
            } for i in range(n))
-        
+    
+    # vConstraints = ({'type':'ineq',
+    #         'fun': lambda x: np.array([n - norm(x)**2]),
+    #         'jac': lambda x: np.array(-2*x)
+    #        })
     # Now, let the iterations begin
     converged = False
     iter = 0
     while iter < maxIter and not converged:
         # Fix v, minimize x
         print('----Update x steps')               
-        x_res = minimize(fx, xt, constraints=xConstraints, method='COBYLA')
+        x_res = minimize(fx, xt, constraints=xConstraints,  method='COBYLA')
         x = x_res.x
         
         # Fix x, update v
         print('----Update v steps')
         v_res = minimize(fv, vt, constraints = vConstraints, method='COBYLA')
         v = v_res.x
-        
-        print("Iter: %d , v diff: %.3f, rho = %.3f constraints: %f" %(iter, norm(v - vt), rho, (n-np.dot(xt, vt))**2))
+        print max(x), min(x)
+        print max(v), min(v)
+        print("Iter: %d , fx = %.3f v diff: %.3f, rho = %.3f constraints: %f" %(iter, fx(x), norm(v - vt), rho, (n-np.dot(xt, vt))**2))
         # Check for convergence
         # if iter > 4 and ((norm(v - vt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
-        if iter > 4 and ((norm(v - vt) < 1e-6  or (n-np.dot(xt, vt))**2<1.5)):
+        if iter > 4 and ((norm(v - vt) < 1e-6  or (n-np.dot(xt, vt))**2<1e-6)):
             converged = True
             print('--------Using LINF  - Converged---------')            
             return vt
