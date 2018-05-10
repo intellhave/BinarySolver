@@ -58,7 +58,7 @@ def BinarySolver(func, x0, rho, maxIter, sigma=100):
     while iter < maxIter and not converged:
         # Fix v, minimize x
         print('----Updating x ')               
-        x_res = minimize(fx, xt, bounds = xbounds, method='COBYLA')
+        x_res = minimize(fx, xt, bounds = xbounds)
         x = x_res.x
         # print min(x), max(x)
         # Fix x, update v
@@ -74,22 +74,21 @@ def BinarySolver(func, x0, rho, maxIter, sigma=100):
               %(iter, fcost(x), fcost(xt), norm(x - xt), rho, (n-np.dot(xt, vt))**2))
         # Check for convergence
         # if iter > 4 and ((norm(v - vt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
-        if iter > 4 and ( (norm(x - xt) < 1e-6  or 
-                          (n-np.dot(xt, vt))**2<1e-6 or 
-                          abs(fcost(x)-fcost(xt)<1e-6)  ) ):
+        if iter > 2 and ( (norm(x - xt) < 1e-6  or                           
+                          abs(fcost(x)-fcost(xt))<1e-6  ) ):
             converged = True
             print('--------Using LINF  - Converged---------')            
-            return xt #np.ones(x0.shape) - vt
+            return np.ones(x0.shape) - vt
         
         #print (xt)
-        rho = rho*1.1
+        rho = rho*1.05
         xt = x
         vt = v
 
         
         iter = iter + 1
 
-    return xt #np.ones(x0.shape) - vt
+    return  np.ones(x0.shape) - vt
 #
 
 
