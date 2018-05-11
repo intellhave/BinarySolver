@@ -4,7 +4,7 @@ from scipy.optimize import minimize
 from scipy.linalg import norm
 
 
-def BinarySolver(func, x0, rho, maxIter, sigma=100):
+def BinarySolver(func, h0, x0, rho, maxIter, sigma=100):
 
     """
     Use exact penalty method to solve optimization problem with binary constraints
@@ -27,18 +27,23 @@ def BinarySolver(func, x0, rho, maxIter, sigma=100):
 
     n = len(x0)
     #xt, vt: Values of x and v at the previous iteration, which are used to update x and v at the current iteration, respectively
-    h0 = x0.copy()    
-    xt = np.sign(x0) #np.zeros(x0.shape)  #np.sign(x0)
+    #h0 = x0.copy()    
+    xt = x0 #np.zeros(x0.shape)  #np.sign(x0)
     vt = np.ones(xt.shape) - xt #np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this
-    print("Initial cost: %f norm x = %f" %(func(xt), norm(xt)))
+    
     
     # Lagrangian duals
     y1 = np.zeros(x0.shape)
     y2 = np.zeros(x0.shape)
 
     def fcost(x): 
-        return func(x) + + sigma*np.sum(np.power(x-h0,2)) 
+        return func(x) + sigma*np.sum((x-h0)**2) 
    
+    print("Initial cost with sign: %f without sign = %f" %(fcost(xt), fcost(h0)))
+    print("reconstruction: %f" %(func(x0)))
+    print("Encoder error: %f" %(sigma*np.sum((x0-h0)**2)))
+    # pdb.set_trace()
+
     def fx(x): # Fix v, solve for x
         return func(x) + sigma*np.sum(np.power(x-h0,2)) 
         + np.dot(y1, vt - np.ones(xt.shape) + x) + 0.5*rho*(np.sum(np.power(vt + x - np.ones(xt.shape), 2))) 
@@ -70,15 +75,17 @@ def BinarySolver(func, x0, rho, maxIter, sigma=100):
         y1 = y1 + rho*(v + x - np.ones(x0.shape))
         y2 = y2 + rho*(np.multiply(v, np.ones(x0.shape) + x))
 
-        print("Iter: %d , fx = %.3f, prev_fx = %.3f, x diff: %.3f, rho = %.3f constraints: %f" 
-              %(iter, fcost(x), fcost(xt), norm(x - xt), rho, (n-np.dot(xt, vt))**2))
+        print("Iter: %d , fx = %.3f, prev_fx = %.3f, x diff: %.3f, rho = %.3f reconstruction: %f" 
+              %(iter, fcost(x), fcost(xt), norm(x - xt), rho, func(x)))
+        print("reconstruction: %f" %(func(x)))
+        print("Encoder error: %f" %(sigma*np.sum((x-h0)**2)))
         # Check for convergence
         # if iter > 4 and ((norm(v - vt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
-        if iter > 2 and ( (norm(x - xt) < 1e-6  or                           
+        if iter > 1 and ( (norm(x - xt) < 1e-6  or                           
                           abs(fcost(x)-fcost(xt))<1e-6  ) ):
             converged = True
             print('--------Using LINF  - Converged---------')            
-            return np.ones(x0.shape) - vt
+            return xt #np.ones(x0.shape) - vt
         
         #print (xt)
         rho = rho*1.05
@@ -88,7 +95,7 @@ def BinarySolver(func, x0, rho, maxIter, sigma=100):
         
         iter = iter + 1
 
-    return  np.ones(x0.shape) - vt
+    return  xt #np.ones(x0.shape) - vt
 #
 
 
