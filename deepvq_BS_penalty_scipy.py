@@ -1,0 +1,110 @@
+import pdb
+import numpy as np
+from scipy.optimize import minimize
+from scipy.linalg import norm
+
+def BinarySolver(decoder_params, x_batch, batch_size,latent_dim,currentH,currentB,rho, maxIter, sigma=100):
+
+    """
+    Solve optimization problem with binary constraints
+        min_x func(x)
+        s.t. x \in {-1,1}
+
+    Inputs:
+        - func: Function that needs to be minimized
+        - x0:   Initialization
+    
+    This implementation uses a novel method invented by HKT Team 
+    Copyright 2018 HKT
+
+    Refereces: https://www.facebook.com/dangkhoasdc - Khoa will be also the presenter for our oral presentation
+    If Khoa can not be reached, please contact Tuan Hoang:
+    https://www.facebook.com/hoang.anhxtuan
+
+    """
+
+    x0 = np.sign(currentB) # Input current B is supposed to be binary. Sign here is just  to assure.
+    n = len(x0)
+    
+    #xt, vt: Values of x and v at the previous iteration, which are used to update x and v at the current iteration, respectively
+    
+    xt = x0 #np.zeros(x0.shape)  #np.sign(x0)
+    vt = xt #np.zeros(xt.shape)  # Initialize v to zeros!!!!!!! Note on this
+    
+    # Define the funtion to compute output of decoder based on decoder parameters
+    def func(x):
+        current_x = np.reshape(x, (batch_size, latent_dim))
+        for layer_param in decoder_params:            
+            current_x = np.tanh(np.dot(current_x, layer_param[0]) + layer_param[1])
+        return np.sum((current_x - x_batch)**2) + sigma*np.sum( (x-currentH)**2 ) 
+    
+    def fcost(x): 
+        return func(x) + sigma*np.sum((x-currentH)**2) 
+   
+
+    print("Initial cost with sign: %f without sign = %f" %(fcost(xt), fcost(currentH)))
+    print("reconstruction: %f" %(func(x0)))
+    print("Encoder error: %f" %(sigma*np.sum((x0-currentH)**2)))
+    # pdb.set_trace()
+
+    def fx(x): # Fix v, solve for x                
+        return func(x) + rho*(n-np.dot(vt,x))       
+
+    def fv(x): # Fix x, solve for v
+        return (n - np.dot(xt,x))
+    
+    # Define the lower and upper bounds for fx, i.e., -1 <= x <= 1        
+    xbounds= [(-1,1) for i in range(n)]
+    vbounds = [(0, 2) for i in range(n)]
+    vConstraints = ({'type':'ineq',
+            'fun': lambda x: np.array([n - norm(x)**2]),
+            'jac': lambda x: np.array(-2*x)
+           })
+    # Now, let the iterations begin
+    converged = False
+    iter = 0
+    
+    while iter < maxIter and not converged:
+        # Fix v, minimize x        
+        print('----Updating x ')                       
+        
+       
+        x_res = minimize(fx, xt, bounds = xbounds)
+        x = x_res.x
+
+        # print min(x), max(x)
+        # Fix x, update v
+        print('----Updating v')
+        v_res = minimize(fv, vt, constraints=vConstraints)
+        v = v_res.x
+
+        # print min(v), max(v)
+       
+
+        print("Iter: %d , fx = %.3f, prev_fx = %.3f, x diff: %.3f, rho = %.3f reconstruction: %f constraints = %.3f" 
+              %(iter, fcost(x), fcost(xt), norm( np.multiply(v, 1+x) ), rho, func(x), norm(v-x)))
+        print("reconstruction: %f" %(func(x)))
+        print("Encoder error: %f" %(sigma*np.sum((x-currentH)**2)))
+        # Check for convergence
+        # if iter > 4 and ((norm(v - vt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
+        
+        
+        if iter >=3 and ( (norm(v-x) < 1e-6  or                           
+                          fcost(x) > fcost(xt)  ) ):
+            converged = True
+            print('--------Using LINF  - Converged---------')            
+            return xt #np.ones(x0.shape) - vt
+        
+        #print (xt)
+        rho = rho*1.1
+        xt = x
+        vt = v
+
+        
+        iter = iter + 1
+
+    return  xt #np.ones(x0.shape) - vt
+#
+
+
+
