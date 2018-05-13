@@ -39,6 +39,9 @@ class x_problem:
         + np.dot (self.y2, np.multiply(self.vt, x+np.ones(self.vt.shape))) + 0.5*self.rho*np.sum(np.power(np.multiply(self.vt, x+np.ones(self.vt.shape)),2))
         return [total]
 
+    def gradient(self, x):
+        return pg.estimate_gradient_h(lambda x: self.fitness(x), x)
+
     def get_bounds(self):
         return ([-1 for i in range(self.dimension)], [1 for i in range(self.dimension)])
     
@@ -113,14 +116,19 @@ def BinarySolver(decoder_params, x_batch, batch_size,latent_dim,currentH,current
     while iter < maxIter and not converged:
         # Fix v, minimize x        
         print('----Updating x ')                       
-        algo = pg.algorithm(pg.bee_colony(20,20))
-        # uda = pg.nlopt("slsqp")
-        # algo = pg.algorithm(uda)
+        
+        # Good methods: sbplx, auglag, bobyqa
+        nl = pg.nlopt(solver = 'auglag')                
+        algo = pg.algorithm(nl)
         prob = x_problem(x_batch, batch_size, latent_dim, decoder_params, currentH, vt, y1, y2, sigma, rho)
-        pop = pg.population(prob, 50)
+        nl.xtol_rel = 1e-6
+        prob.c_tol = [1e-6]*n
+        pop = pg.population(prob, 1)
         # pop=pg.population(prob, 20, 20 )
-        # pop = algo.evolve(pop)
-        x = pop.champion_x        
+        pop = algo.evolve(pop)
+        x = pop.champion_x  
+        cost = pop.champion_f
+        print cost       
         # x_res = minimize(fx, xt, bounds = xbounds)
         # x = x_res.x
 
@@ -135,12 +143,12 @@ def BinarySolver(decoder_params, x_batch, batch_size,latent_dim,currentH,current
         y2 = y2 + rho*(np.multiply(v, np.ones(x0.shape) + x))
 
         print("Iter: %d , fx = %.3f, prev_fx = %.3f, x diff: %.3f, rho = %.3f reconstruction: %f" 
-              %(iter, fcost(x), fcost(xt), norm(x - xt), rho, func(x)))
+              %(iter, fx(x), fx(xt), norm(x - xt), rho, func(x)))
         print("reconstruction: %f" %(func(x)))
         print("Encoder error: %f" %(sigma*np.sum((x-currentH)**2)))
         # Check for convergence
         # if iter > 4 and ((norm(v - vt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
-        if iter > 1 and ( (norm(x - xt) < 1e-6  or                           
+        if iter >=1 and ( (norm(x - xt) < 1e-6  or                           
                           fcost(x) > fcost(xt)  ) ):
             converged = True
             print('--------Using LINF  - Converged---------')            
