@@ -82,17 +82,24 @@ def BinarySolver(decoder_params, x_batch, batch_size,latent_dim,currentH,current
         
         # Check for convergence        
         if iter >=3 and ( ( n - np.dot(x,v) < 1e-2  or                           
-                          abs(fx(x) - fx(xt)) < 1e-6  ) ):
+                          abs(fx(x) - fx(xt)) < 1e-6 ) ):
             converged = True
-            print('--------Using LINF  - Converged---------')            
-            return xt         
+            print('--------Using LINF  - Converged---------')  
+            if (fcost(xt)<fcost(x0)):          
+                return xt         
+            else:
+                return x0
+
         
         rho = rho*1.2
         xt = x
         vt = v
         iter = iter + 1
 
-    return  xt 
+    if (fcost(xt)<fcost(x0)):          
+        return xt         
+    else:
+        return x0
 
 
 
