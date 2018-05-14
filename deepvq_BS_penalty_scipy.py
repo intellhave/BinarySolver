@@ -48,14 +48,14 @@ def BinarySolver(decoder_params, x_batch, batch_size,latent_dim,currentH,current
     # pdb.set_trace()
 
     def fx(x): # Fix v, solve for x                
-        return func(x) + rho*(n-np.dot(vt,x))       
+        return func(x) + rho*(n-np.dot(vt,x))**1       
 
     def fv(x): # Fix x, solve for v
-        return (n - np.dot(xt,x))
+        return (n - np.dot(xt,x))**1
     
     # Define the lower and upper bounds for fx, i.e., -1 <= x <= 1        
     xbounds= [(-1,1) for i in range(n)]
-    vbounds = [(0, 2) for i in range(n)]
+    vbounds = [(-1, 1) for i in range(n)]
     vConstraints = ({'type':'ineq',
             'fun': lambda x: np.array([n - norm(x)**2]),
             'jac': lambda x: np.array(-2*x)
@@ -67,44 +67,33 @@ def BinarySolver(decoder_params, x_batch, batch_size,latent_dim,currentH,current
     while iter < maxIter and not converged:
         # Fix v, minimize x        
         print('----Updating x ')                       
-        
-       
         x_res = minimize(fx, xt, bounds = xbounds)
         x = x_res.x
 
-        # print min(x), max(x)
         # Fix x, update v
         print('----Updating v')
-        v_res = minimize(fv, vt, constraints=vConstraints)
+        v_res = minimize(fv, vt,  constraints= vConstraints, bounds=vbounds)
         v = v_res.x
 
-        # print min(v), max(v)
-       
-
         print("Iter: %d , fx = %.3f, prev_fx = %.3f, x diff: %.3f, rho = %.3f reconstruction: %f constraints = %.3f" 
-              %(iter, fcost(x), fcost(xt), norm( np.multiply(v, 1+x) ), rho, func(x), norm(v-x)))
-        print("reconstruction: %f" %(func(x)))
-        print("Encoder error: %f" %(sigma*np.sum((x-currentH)**2)))
-        # Check for convergence
-        # if iter > 4 and ((norm(v - vt) < 1e-6 and abs(func(x) - func(xt) < 1e-6)) or (n-np.dot(xt, vt))**2<1.5):
+              %(iter, fx(x), fx(xt), norm( np.multiply(v, 1+x) ), rho, func(x), n - np.dot(x,v)))        
+        print("Total Cost: %f" %(fcost(x)))
+        print("Reconsutrction: %f, Encoder error: %f" %( fcost(x)-sigma*np.sum((x-currentH)**2), sigma*np.sum((x-currentH)**2)))
         
-        
-        if iter >=3 and ( (norm(v-x) < 1e-6  or                           
-                          fcost(x) > fcost(xt)  ) ):
+        # Check for convergence        
+        if iter >=3 and ( ( n - np.dot(x,v) < 1e-2  or                           
+                          abs(fx(x) - fx(xt)) < 1e-6  ) ):
             converged = True
             print('--------Using LINF  - Converged---------')            
-            return xt #np.ones(x0.shape) - vt
+            return xt         
         
-        #print (xt)
-        rho = rho*1.1
+        rho = rho*1.2
         xt = x
         vt = v
-
-        
         iter = iter + 1
 
-    return  xt #np.ones(x0.shape) - vt
-#
+    return  xt 
+
 
 
 
